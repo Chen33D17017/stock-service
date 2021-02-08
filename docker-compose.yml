@@ -1,4 +1,40 @@
 version: '3'
 services:
-  mysql_database:
-    image: "mysql:8.0.23"
+  stock-db:
+    image: "mysql:5"
+    container_name: stock-db
+    ports:
+      - 3306:3306
+    volumes:
+    - ./initdb.d:/docker-entrypoint-initdb.d
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci
+    environment:
+      - MYSQL_ROOT_PASSWORD=test123
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=password
+      - MYSQL_TCP_PORT=3306
+      - MYSQL_DATABASE=stock_price
+    networks:
+      - fullstack
+  
+  app:
+    build: .
+    container_name: stock-server
+    tty: true
+    environment:
+      - DISCORD_WEBHOOK=https://discord.com/api/webhooks/802822615063724045/c1jkz9vq-gBD13GxDgYaWjXsqbLREC493B7cRX3yKmN3VUZzjvUb10mU095Bib3sX9-m
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_PORT=3306
+      - DB_NAME=stock_price
+      - DB_HOST=stock-db
+    ports:
+      - 8080:8080
+    depends_on:
+      - stock-db
+    networks:
+      - fullstack
+
+networks:
+  fullstack:
+    driver: bridge
