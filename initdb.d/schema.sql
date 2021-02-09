@@ -6,15 +6,15 @@ SET NAMES utf8;
 set character_set_client = utf8mb4;
 
 CREATE TABLE `stock` (
-    `id` INT AUTO_INCREMENT,
-    `code` CHAR(50) UNIQUE NOT NULL,
+    `id` CHAR(50) UNIQUE NOT NULL,
     `name` CHAR(50),
     PRIMARY KEY (`id`)
 )  ENGINE=INNODB;
 
 
 CREATE TABLE`stock_data` (
-	`stock_id` INT,
+    `id` INT AUTO_INCREMENT,
+	`stock_id` CHAR(50) NOT NULL,
     `price_at` date,
     `open` double NOT NULL,
     `high` double NOT NULL,
@@ -54,7 +54,7 @@ CREATE TABLE `user_api` (
 
 CREATE TABLE `stock_log`(
     `id` INT AUTO_INCREMENT,
-    `stock_id` INT NOT NULL,
+    `stock_id` CHAR(50) NOT NULL,
     `price` FLOAT NOT NULL,
     `time` TIMESTAMP NOT NULL,
     PRIMARY KEY (`id`),
@@ -72,7 +72,7 @@ CREATE TABLE `holiday` (
 CREATE TABLE `stock_alert` (
     `id` INT AUTO_INCREMENT,
     `user_id` INT NOT NULL,
-    `stock_id` INT NOT NULL,
+    `stock_id` CHAR(50) NOT NULL,
     `cross_direction` BOOLEAN NOT NULL,
     `price` FLOAT NOT NULL,
     `alert_on` BOOLEAN,
@@ -85,18 +85,20 @@ CREATE TABLE `stock_alert` (
 -- buy_sell buy: TRUE sell: FALSE
 CREATE TABLE `trade_log`(
     `id` INT AUTO_INCREMENT,
+    `stock_id` CHAR(50) NOT NULL,
     `user_id` INT NOT NULL,
     `buy_sell` BOOLEAN NOT NULL,
     `time` TIMESTAMP NOT NULL,
     `price` FLOAT NOT NULL,
     PRIMARY KEY (`id`),
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
+    FOREIGN KEY (`stock_id`) REFERENCES `stock`(`id`)
 ) ENGINE=INNODB;
 
 CREATE TABLE `cron_hook`(
     `id` INT AUTO_INCREMENT,
     `user_id` INT NOT NULL,
-    `stock_id` INT NOT NULL,
+    `stock_id` CHAR(50) NOT NULL,
     `price` FLOAT NOT NULL,
     PRIMARY KEY(`id`),
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`),
