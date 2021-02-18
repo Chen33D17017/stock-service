@@ -21,7 +21,8 @@ CREATE TABLE`stock_data` (
     `low` double NOT NULL,
     `close` double NOT NULL,
     `vol` double NOT NULL,
-    CONSTRAINT `contacts_pk` PRIMARY KEY (`stock_id`, `price_at`),
+    PRIMARY KEY(`id`),
+    CONSTRAINT `contacts_pk` UNIQUE(`stock_id`, `price_at`),
     FOREIGN KEY (`stock_id`) REFERENCES `stock`(`id`)
 ) ENGINE=INNODB;
 
@@ -73,9 +74,10 @@ CREATE TABLE `stock_alert` (
     `id` INT AUTO_INCREMENT,
     `user_id` INT NOT NULL,
     `stock_id` CHAR(50) NOT NULL,
+    `buy_sell` BOOLEAN NOT NULL,
     `cross_direction` BOOLEAN NOT NULL,
     `price` FLOAT NOT NULL,
-    `alert_on` BOOLEAN,
+    `alert_on` BOOLEAN DEFAULT TRUE,
     PRIMARY KEY (`id`),
     FOREIGN KEY (`user_id`) REFERENCES `user`(`id`),
     FOREIGN KEY (`stock_id`) REFERENCES `stock`(`id`)
@@ -86,12 +88,12 @@ CREATE TABLE `stock_alert` (
 CREATE TABLE `trade_log`(
     `id` INT AUTO_INCREMENT,
     `stock_id` CHAR(50) NOT NULL,
-    `user_id` INT NOT NULL,
+    `user_id` INT NOT NULL, 
     `buy_sell` BOOLEAN NOT NULL,
     `time` TIMESTAMP NOT NULL,
     `price` FLOAT NOT NULL,
     PRIMARY KEY (`id`),
-    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`)
+    FOREIGN KEY (`user_id`) REFERENCES `user`(`id`),
     FOREIGN KEY (`stock_id`) REFERENCES `stock`(`id`)
 ) ENGINE=INNODB;
 

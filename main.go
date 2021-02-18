@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/robfig/cron"
+	"github.com/robfig/cron/v3"
 )
 
 var cronManager *cron.Cron
 var dbm *sqlx.DB
+var cronJobManager []cron.EntryID
 
 const DateFormat = "2006-01-02"
 
@@ -21,20 +23,14 @@ var wg *sync.WaitGroup
 func init() {
 	cronManager = cron.New()
 	dbm = NewDBManager()
-
 }
 
 func main() {
-	http.HandleFunc("/getStock", test)
-	http.HandleFunc("/", hello)
-	http.HandleFunc("/price", price)
+	http.HandleFunc("/alertCheck", alertCheck)
+	http.HandleFunc("/price", getPrice)
 	http.HandleFunc("/notification", notification)
-	http.HandleFunc("/stock", stockInfo)
+	http.HandleFunc("/regist", registerAlert)
 	http.ListenAndServe(":8080", nil)
-}
-
-func hello(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Hello World")
 }
 
 func notification(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +45,7 @@ func notification(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func price(w http.ResponseWriter, r *http.Request) {
+func getPrice(w http.ResponseWriter, r *http.Request) {
 	keys, ok := r.URL.Query()["key"]
 	if !ok || len(keys[0]) < 1 {
 		fmt.Fprint(w, "URL Param 'key' is missing")
@@ -61,10 +57,21 @@ func price(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, price)
 }
 
-func test(w http.ResponseWriter, r *http.Request) {
-	keys, ok := r.URL.Query()["key"]
+func alertCheck(w http.ResponseWriter, r *http.Request) {
+	keys, ok := r.URL.Query()["stock"]
 	if !ok || len(keys[0]) < 1 {
 		fmt.Fprint(w, "URL Param 'key' is missing")
+		return
 	}
-	parseStockDetail(keys[0])
+	price, _ := r.URL.Query()["price"]
+	if !ok || len(price[0]) < 1 {
+		fmt.Fprintf(w, "URL param 'price' is missing'")
+	}
+	p, _ := strconv.ParseFloat(price[0], 64)
+	rst, err := checkStockAlert(keys[0], p)
+	if err != nil{
+		errorResponse(w, err.Error())
+	}
+	
+	successResponse(w, rst)
 }

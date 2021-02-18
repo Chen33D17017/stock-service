@@ -16,24 +16,6 @@ services:
       - MYSQL_DATABASE=stock_price
     networks:
       - fullstack
-  
-  app:
-    build: .
-    container_name: stock-server
-    tty: true
-    environment:
-      - DISCORD_WEBHOOK=https://discord.com/api/webhooks/802822615063724045/c1jkz9vq-gBD13GxDgYaWjXsqbLREC493B7cRX3yKmN3VUZzjvUb10mU095Bib3sX9-m
-      - DB_USER=user
-      - DB_PASSWORD=password
-      - DB_PORT=3306
-      - DB_NAME=stock_price
-      - DB_HOST=stock-db
-    ports:
-      - 8080:8080
-    depends_on:
-      - stock-db
-    networks:
-      - fullstack
 
 networks:
   fullstack:

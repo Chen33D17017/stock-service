@@ -23,15 +23,16 @@ type stockDetail struct {
 	Vol   float64
 }
 
-func parseStockPrice(sc string) (string, error) {
+func parseStockPrice(sc string) (float64, error) {
 	addr := fmt.Sprintf(INSTANT_STOCK_ADDR, sc)
 	resp, err := soup.Get(addr)
 	if err != nil {
-		return "", fmt.Errorf("parseStockData err: %s", err)
+		return 0, fmt.Errorf("parseStockData err: %s", err)
 	}
 	doc := soup.HTMLParse(resp)
 	price := doc.FindAll("td", "class", "stoksPrice")
-	return price[1].Text(), nil
+	return getStockVal(price[1].Text()), nil
+	// return price[1].Text(), nil
 }
 
 func parseStockName(sc string) (string, error) {
@@ -50,11 +51,6 @@ func parseStockDetail(sc string) {
 	addr := fmt.Sprintf(SOURCE_ADDR,
 		sc, today.Year(), today.Month(), today.Day())
 	
-	var id int
-	ok := dbm.Get(&id, `SELECT id FROM stock WHERE code=?`, sc)
-	if ok != nil{
-		log.Printf("parseStockDetail: fail to get stock %s", sc)
-	}
 	worklist := make(chan []int, 1)
 	unseenPage := make(chan int)
 	
@@ -72,7 +68,7 @@ func parseStockDetail(sc string) {
 				}
 				doc := soup.HTMLParse(resp)
 				pages := parsePageNumber(doc)
-				parseStockPage(doc, id)
+				parseStockPage(doc, sc)
 				go func() {
 					worklist <- pages
 				}()
@@ -93,7 +89,7 @@ func parseStockDetail(sc string) {
 	}
 }
 
-func parseStockPage(doc soup.Root, id int) {
+func parseStockPage(doc soup.Root, code string) {
 	elems := doc.Find("div", "class", "padT12").Find("tbody").FindAll("tr")
 	//var rst stockDetail
 	tx := dbm.MustBegin()
@@ -108,7 +104,7 @@ func parseStockPage(doc soup.Root, id int) {
 			rst := stockDetail{getDate(data[0].Text()), getStockVal(data[1].Text()), getStockVal(data[2].Text()),
 				getStockVal(data[3].Text()), getStockVal(data[4].Text()), getStockVal(data[5].Text())}
 			tx.MustExec("INSERT INTO stock_data(stock_id, price_at, open, high, low, close, vol) VALUES (?, ?, ?, ?, ?, ?, ?)",
-				id, rst.Date, rst.Open, rst.High, rst.Low, rst.Close, rst.Vol)
+				code, rst.Date, rst.Open, rst.High, rst.Low, rst.Close, rst.Vol)
 		}
 	}
 	tx.Commit()

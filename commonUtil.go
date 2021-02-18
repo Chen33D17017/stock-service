@@ -4,11 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
 type ErrorMsg struct {
 	Msg string `json:"msg"`
+}
+
+type ResponseMsg struct{
+	Success bool `json:"success"`
+	Data interface{} `json:"data"`
 }
 
 func apiRequest(req *http.Request, response interface{}) error {
@@ -27,18 +33,20 @@ func apiRequest(req *http.Request, response interface{}) error {
 	if err != nil {
 		return fmt.Errorf("apiRequest err %s", err.Error())
 	}
-
 	return nil
 }
 
-func jsonResponse(w http.ResponseWriter, data interface{}) {
+func successResponse(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(data)
+	response := ResponseMsg{true, data}
+	json.NewEncoder(w).Encode(response)
 }
 
-func errorResponse(w http.ResponseWriter, errMsg string){
+func errorResponse(w http.ResponseWriter, errMsg string) {
+	log.Println(errMsg)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusInternalServerError)
-	json.NewEncoder(w).Encode(ErrorMsg{errMsg})
+	response := ResponseMsg{false, ErrorMsg{errMsg}}
+	json.NewEncoder(w).Encode(response)
 }
