@@ -23,7 +23,11 @@ func cronMain() {
 
 // add the corn job on every moring AM 8:50
 func runEveryDay() {
-	// TODO: check whether it is on holiday
+	var tmp int
+	dbm.Get(&tmp, "SELECT COUNT(*) FROM holiday WHERE date=?", time.Now().Format(DateFormat))
+	if tmp > 0{
+		return
+	}
 	var rst []string
 	// Find DISTINCT stock code from stock_alert
 	dbm.Select(&rst, "SELECT DISCTINCT s.code FROM stock_alert AS sa JOIN stock AS s ON sa.stock_id=s.id")

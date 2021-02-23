@@ -64,7 +64,6 @@ CREATE TABLE `stock_log`(
 
 CREATE TABLE `holiday` (
     `id` INT AUTO_INCREMENT,
-    `name` CHAR(255),
     `date` DATE UNIQUE NOT NULL,
     PRIMARY KEY (`id`)
 ) ENGINE=INNODB;
