@@ -12,9 +12,9 @@ import (
 )
 
 const INSTANT_STOCK_ADDR = "https://stocks.finance.yahoo.co.jp/stocks/detail/?code=%s.T"
-const SOURCE_ADDR = "https://info.finance.yahoo.co.jp/history/?code=%s.T&sy=2000&sm=1&sd=1&ey=%d&em=%d&ed=%d&tm=d"
+const SOURCE_ADDR = "https://info.finance.yahoo.co.jp/history/?code=%s.T&sy=%d&sm=%d&sd=%d&ey=%d&em=%d&ed=%d&tm=d"
 
-type stockDetail struct {
+type StockDetail struct {
 	Date  string
 	Open  float64
 	High  float64
@@ -45,15 +45,13 @@ func parseStockName(sc string) (string, error) {
 	return doc.Find("th", "class", "symbol").Find("h1").Text(), nil
 }
 
-func parseStockDetail(sc string) {
-	location, _ := time.LoadLocation("Asia/Tokyo")
-	today := time.Now().In(location)
-	addr := fmt.Sprintf(SOURCE_ADDR,
-		sc, today.Year(), today.Month(), today.Day())
-	
+func parseStockDetail(sc string, startDate time.Time, endDate time.Time) {
+	addr := fmt.Sprintf(SOURCE_ADDR, sc,
+		startDate.Year(), startDate.Month(), startDate.Day(),
+		endDate.Year(), endDate.Month(), endDate.Day())
+
 	worklist := make(chan []int, 1)
 	unseenPage := make(chan int)
-	
 
 	worklist <- []int{1}
 	n := 1
@@ -101,7 +99,7 @@ func parseStockPage(doc soup.Root, code string) {
 		data := elem.FindAll("td")
 		// need to consider the case like 分割: 1株 -> 2株
 		if len(data) == 7 {
-			rst := stockDetail{getDate(data[0].Text()), getStockVal(data[1].Text()), getStockVal(data[2].Text()),
+			rst := StockDetail{getDate(data[0].Text()), getStockVal(data[1].Text()), getStockVal(data[2].Text()),
 				getStockVal(data[3].Text()), getStockVal(data[4].Text()), getStockVal(data[5].Text())}
 			tx.MustExec("INSERT INTO stock_data(stock_id, price_at, open, high, low, close, vol) VALUES (?, ?, ?, ?, ?, ?, ?)",
 				code, rst.Date, rst.Open, rst.High, rst.Low, rst.Close, rst.Vol)

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/robfig/cron/v3"
@@ -15,6 +16,7 @@ import (
 var cronManager *cron.Cron
 var dbm *sqlx.DB
 var cronJobManager []cron.EntryID
+var beginDate time.Time
 
 const DateFormat = "2006-01-02"
 
@@ -23,6 +25,7 @@ var wg *sync.WaitGroup
 func init() {
 	cronManager = cron.New()
 	dbm = NewDBManager()
+	beginDate , _ = time.Parse(DateFormat, "2000-01-01")
 }
 
 func main() {
@@ -30,6 +33,8 @@ func main() {
 	http.HandleFunc("/price", getPrice)
 	http.HandleFunc("/notification", notification)
 	http.HandleFunc("/regist", registerAlert)
+	http.HandleFunc("/test", updateStock)
+	http.HandleFunc("/holiday", registHoliday)
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -69,9 +74,21 @@ func alertCheck(w http.ResponseWriter, r *http.Request) {
 	}
 	p, _ := strconv.ParseFloat(price[0], 64)
 	rst, err := checkStockAlert(keys[0], p)
-	if err != nil{
+	if err != nil {
 		errorResponse(w, err.Error())
 	}
-	
+
 	successResponse(w, rst)
 }
+
+func updateStock(w http.ResponseWriter, r *http.Request){
+	keys, ok := r.URL.Query()["stock"]
+	if !ok || len(keys[0]) < 1 {
+		fmt.Fprint(w, "URL Param 'key' is missing")
+		return
+	}
+
+	updateStockData(keys[0])
+	successResponse(w, fmt.Sprintf("Update stock %s", keys[0]))
+}
+

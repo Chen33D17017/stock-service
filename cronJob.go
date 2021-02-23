@@ -15,7 +15,9 @@ type PriceCompare struct{
 }
 
 func cronMain() {
-	cronManager.AddFunc("0 50 8 * * 1-5", runEveryDay)
+	cronManager.AddFunc("0 59 8 * * 1-5", runEveryDay)
+	cronManager.AddFunc("0 30 11 * * 1-5", removeDailycron)
+	cronManager.AddFunc("0 30 12 * * 1-5", runEveryDay)
 	cronManager.AddFunc("0 1 15 * * 1-5", removeDailycron)
 }
 
@@ -28,13 +30,9 @@ func runEveryDay() {
 	for _, code := range rst {
 		code := code
 		entryId, err := cronManager.AddFunc("0 * 9-15 * * *", func() {
-			addStockLog(code)
+			price, err := addStockLog(code)
+			
 			// Check whether hit alert on specific stock
-			price, err := parseStockPrice(code)
-			if err != nil{
-				log.Printf("Daily parse stock %s err: %s\n", code, err.Error())
-				return 
-			}
 			checkRst, err := checkStockAlert(code, price)
 			if err != nil{
 				log.Printf("Daily parse check stock %s err : %s\n", code, err.Error())
@@ -59,11 +57,15 @@ func runEveryDay() {
 
 // remove the cron job at PM3:00
 func removeDailycron() {
+	var rst []string
 	for _, jobEntity := range cronJobManager {
 		cronManager.Remove(jobEntity)
 	}
 	cronJobManager = make([]cron.EntryID, 0)
-	// TODO: Adding all stock price at the close
+	dbm.Select(&rst, "SELECT DISCTINCT s.code FROM stock_alert AS sa JOIN stock AS s ON sa.stock_id=s.id")
+	for _, stock := range rst {
+		updateStockData(stock)
+	}
 }
 
 func addStockLog(code string) (float64, error) {

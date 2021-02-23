@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 )
 
 type StockName struct {
@@ -69,8 +70,19 @@ func checkStockInfo(code string) (StockName, error) {
 		}
 		go func(chan string) {
 			code := <-lock
-			parseStockDetail(code)
+			location, _ := time.LoadLocation("Asia/Tokyo")
+			today := time.Now().In(location)
+			parseStockDetail(code, beginDate, today)
 		}(lock)
 	}
 	return result, nil
+}
+
+func updateStockData(code string){
+	var latest string
+	dbm.Get(&latest, "SELECT MAX(price_at) FROM stock_data WHERE stock_id=?", code)
+	startDate, _ := time.Parse(DateFormat, latest)
+	location, _ := time.LoadLocation("Asia/Tokyo")
+	today := time.Now().In(location)
+	parseStockDetail(code, startDate.AddDate(0, 0, 1), today)
 }
