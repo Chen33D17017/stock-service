@@ -33,7 +33,6 @@ func main() {
 	http.HandleFunc("/price", getPrice)
 	http.HandleFunc("/notification", notification)
 	http.HandleFunc("/regist", registerAlert)
-	http.HandleFunc("/test", updateStock)
 	http.HandleFunc("/holiday", registHoliday)
 	http.ListenAndServe(":8080", nil)
 }

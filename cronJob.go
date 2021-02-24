@@ -115,3 +115,7 @@ func checkStockAlert(code string, price float64) ([]PriceCompare, error) {
 	}
 	return rst, nil
 }
+
+func closeAlert(target PriceCompare){
+	
+}
