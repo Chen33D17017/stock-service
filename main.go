@@ -46,6 +46,8 @@ func notification(w http.ResponseWriter, r *http.Request) {
 		}
 		err = json.Unmarshal(body, &msg)
 		sendNotification(msg.Content)
+
+		successResponse(w, "Success to send notification")
 	}
 }
 
@@ -90,4 +92,3 @@ func updateStock(w http.ResponseWriter, r *http.Request){
 	updateStockData(keys[0])
 	successResponse(w, fmt.Sprintf("Update stock %s", keys[0]))
 }
-
